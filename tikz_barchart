@@ -1,0 +1,39 @@
+\begin{figure}
+    \centering
+\begin{tikzpicture}
+\begin{axis}[ 
+xbar, xmin=0,
+xlabel={Occurrences},
+symbolic y coords={%
+    {Operations Research},
+    {Artifical Intelligence},
+    {Econometrics},
+    {Data Science},
+    {Physics},
+    {Economics},
+    {Engineering},
+    {Mathematics},
+    {Statistics},
+    Computer Science},
+ytick=data,
+nodes near coords, 
+nodes near coords align={horizontal},
+ytick=data,
+]
+\addplot coordinates {
+    (11,{Operations Research}) 
+    (12,{Artifical Intelligence}) 
+    (24,{Econometrics}) 
+    (27,{Data Science})
+    (28,{Physics}) 
+    (29,{Economics}) 
+    (37,{Engineering}) 
+    (65,{Mathematics})
+    (72,{Statistics}) 
+    (114,Computer Science)}; 
+\end{axis}
+\end{tikzpicture} %width=6cm,height=7.59cm
+    \caption{Caption}
+    \label{fig:my_label}
+\end{figure}
+

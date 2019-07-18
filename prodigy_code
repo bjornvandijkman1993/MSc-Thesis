@@ -1,0 +1,85 @@
+import pandas as pd
+from prodigy.components.db import connect
+from spacy.gold import biluo_tags_from_offsets
+from spacy.lang.en import English   # or whichever language tokenizer you need
+
+nlp = English()
+
+db = connect()  # uses settings from your prodigy.json
+examples = db.get_dataset('train_gold_education')  # load the annotations
+
+# Only keep the accepted answers, as the rejected ones have no span
+result = []
+for i in examples:
+    if i['answer'] == "accept":
+        result.append(i)
+        
+extended_tags = []
+extended_entities = []
+extended_token = []
+
+for data in result:
+    doc = nlp(data['text'])
+    for token in doc:
+        extended_token.append(token)
+    entities = [(span['start'], span['end'], span['label'])
+    for span in data['spans']]
+    tags = biluo_tags_from_offsets(doc, entities)
+    extended_tags.extend(tags)             
+    extended_entities.extend(entities)
+
+train = pd.DataFrame(
+{'tags': extended_tags,
+'word': extended_token})
+
+train['tags'] = train['tags'].astype(str)
+train['word'] = train['word'].astype(str)
+
+from prodigy.components.db import connect
+from spacy.gold import biluo_tags_from_offsets
+from spacy.lang.en import English   # or whichever language tokenizer you need
+
+nlp = English()
+
+db = connect()  # uses settings from your prodigy.json
+examples = db.get_dataset('evaluation_set_review2')  # load the annotations
+
+# Only keep the accepted answers, as the rejected ones have no span
+result = []
+for i in examples:
+    if i['answer'] == "accept":
+        result.append(i)
+        
+extended_tags = []
+extended_entities = []
+extended_token = []
+
+for data in result:
+    doc = nlp(data['text'])
+    for token in doc:
+        extended_token.append(token)
+    entities = [(span['start'], span['end'], span['label'])
+    for span in data['spans']]
+    tags = biluo_tags_from_offsets(doc, entities)
+    extended_tags.extend(tags)             
+    extended_entities.extend(entities)
+
+test = pd.DataFrame(
+{'tags': extended_tags,
+'word': extended_token})
+
+test['tags'] = test['tags'].astype(str)
+test['word'] = test['word'].astype(str)
+
+frames = [train, test]
+data = pd.concat(frames)
+len(train), len(test), len(data)
+
+data['Sentence #'] = pd.Series(data['word']).shift().isin(['.', '?', '!']).cumsum().add(1).tolist()
+
+# Add Sentence: in front of every sentence number
+data['Sentence #'] = 'Sentence: ' + data['Sentence #'].astype(str)
+data.columns = ['Tag', 'Word', 'Sentence #']
+data["POS"] = "Unknown"
+
+data.to_csv("train_and_test.csv")

@@ -1,0 +1,51 @@
+\begin{figure}[!ht]
+    \centering
+% This file was created by tikzplotlib v0.8.1.
+\begin{tikzpicture}
+\begin{axis}[
+colorbar,
+colorbar style={ylabel={}},
+colormap={mymap}{[1pt]
+  rgb(0pt)=(1,0,0);
+  rgb(1pt)=(1,1,0)
+},
+point meta max=0.84,
+point meta min=0.62,
+height=8cm,
+width=12cm,
+grid=none,
+tick align=none,
+tick pos=both,
+xlabel={C1},
+ylabel = {C2},
+xtick style={color=white!33.33333333333333!black},
+y grid style={white},
+]
+\addplot [only marks, scatter, scatter src=explicit, colormap={mymap}{[1pt]
+  rgb(0pt)=(1,0,0);
+  rgb(1pt)=(1,1,0)
+}]
+table [x=x, y=y, meta=colordata]{%
+x                      y                      colordata
+1 0.1 0.84
+10 0.1 0.73
+5 0.1 0.78
+0.1 0.1 0.84
+0.1 1 0.84
+0.1 5 0.79
+0.1 10 0.74
+0.5 0.5 0.84
+1 1 0.82
+2 2 0.79
+3 3 0.78
+4 4 0.75
+7 7 0.67
+10 10 0.62
+0.01 0.01 0.84
+};
+\end{axis}
+
+\end{tikzpicture}    
+\caption{Results for hyper-parameter tuning of the regularization terms $C1$ and $C2$ in the CRF model.}
+    \label{fig:regularize}
+\end{figure}

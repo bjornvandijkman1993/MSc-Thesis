@@ -1,0 +1,51 @@
+\begin{figure}
+    \centering
+\pgfplotsset{width=13cm,compat=1.9}
+\pgfplotstableread[row sep=\\,col sep=&]{
+    Category & Memory & CRF & LSTM & Bi-LSTM & Bi-LSTM-CRF & ElMO \\
+        Programming & 0.823 & 0.87 & 0.84 & 0.83 & 0.84 & 0.78\\
+        Experience  & 0.309 & 0.77 & 0.05 & 0.20   & 0.59 & 0.56  \\
+        Education & 0.397 & 0.80 & 0.52 & 0.61   & 0.74 & 0.80  \\
+        Language & 0.871 & 0.93 & 0.76 & 0.72   & 0.94 &  0.97\\
+        Micro average & 0.50 & 0.84 & 0.60 & 0.64 & 0.81 & 0.76\\
+}\mydata
+
+\begin{tikzpicture}
+\begin{axis}[
+ylabel={F-score},
+xmajorgrids=false,
+ybar,
+symbolic x coords={Programming, Experience, Education, Language, Micro average},
+xtick=data,
+legend pos = outer north east,
+% reduce height of axis a bit
+height=7cm,
+% set width of bars
+bar width=6pt,
+% remove gap below bars
+ymin=0,
+% remove frame around legend, add some space
+legend style={draw=none,column sep=2mm},
+legend columns=1,
+% customize how the legend images are drawn
+% draw a square instead of two bars
+legend image code/.code={%
+       \draw[#1,draw=none,/tikz/.cd,yshift=-0.25em]
+        (0cm,1pt) rectangle (6pt,7pt);},
+% color map from colorbrewer
+cycle list/Paired,
+% the above only sets the color, need to specify that bars should be filled
+every axis plot/.append style={fill}
+]
+\addplot table[x=Category,y=Memory]{\mydata};
+\addplot table[x=Category,y=CRF]{\mydata};
+\addplot table[x=Category,y=LSTM]{\mydata};
+\addplot table[x=Category,y=Bi-LSTM]{\mydata};
+\addplot table[x=Category,y=Bi-LSTM-CRF]{\mydata};
+\addplot table[x=Category,y=ElMO]{\mydata};
+\legend{Memory, CRF, LSTM, Bi-LSTM, Bi-LSTM-CRF, ElMO}
+\end{axis}
+\end{tikzpicture}
+    \caption{F1-score per entity for 6 different models.}
+    \label{fig:all_models_entities}
+\end{figure}

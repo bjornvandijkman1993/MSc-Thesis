@@ -1,0 +1,74 @@
+\begin{figure}[!ht]
+    \centering
+\begin{tikzpicture}
+
+\definecolor{color0}{rgb}{0.886274509803922,0.290196078431373,0.2}
+
+\begin{axis}[
+height=8cm,
+width=12cm,
+grid=none,
+tick align=none,
+tick pos=both,
+xlabel={Sentence length},
+xmin=-31, xmax=300,
+xtick style={color=white!33.33333333333333!black},
+y grid style={white},
+ylabel={Occurrences},
+ymin=0, ymax=780.15,
+]
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:1,0) rectangle (axis cs:13.8,474);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:13.8,0) rectangle (axis cs:26.6,743);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:26.6,0) rectangle (axis cs:39.4,383);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:39.4,0) rectangle (axis cs:52.2,141);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:52.2,0) rectangle (axis cs:65,76);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:65,0) rectangle (axis cs:77.8,46);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:77.8,0) rectangle (axis cs:90.6,38);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:90.6,0) rectangle (axis cs:103.4,35);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:103.4,0) rectangle (axis cs:116.2,27);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:116.2,0) rectangle (axis cs:129,32);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:129,0) rectangle (axis cs:141.8,21);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:141.8,0) rectangle (axis cs:154.6,29);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:154.6,0) rectangle (axis cs:167.4,17);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:167.4,0) rectangle (axis cs:180.2,12);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:180.2,0) rectangle (axis cs:193,10);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:193,0) rectangle (axis cs:205.8,15);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:205.8,0) rectangle (axis cs:218.6,10);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:218.6,0) rectangle (axis cs:231.4,8);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:231.4,0) rectangle (axis cs:244.2,9);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:244.2,0) rectangle (axis cs:257,8);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:257,0) rectangle (axis cs:269.8,5);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:269.8,0) rectangle (axis cs:282.6,4);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:282.6,0) rectangle (axis cs:295.4,8);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:295.4,0) rectangle (axis cs:308.2,5);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:308.2,0) rectangle (axis cs:321,2);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:321,0) rectangle (axis cs:333.8,3);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:333.8,0) rectangle (axis cs:346.6,0);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:346.6,0) rectangle (axis cs:359.4,1);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:359.4,0) rectangle (axis cs:372.2,1);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:372.2,0) rectangle (axis cs:385,1);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:385,0) rectangle (axis cs:397.8,2);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:397.8,0) rectangle (axis cs:410.6,1);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:410.6,0) rectangle (axis cs:423.4,0);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:423.4,0) rectangle (axis cs:436.2,2);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:436.2,0) rectangle (axis cs:449,0);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:449,0) rectangle (axis cs:461.8,0);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:461.8,0) rectangle (axis cs:474.6,0);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:474.6,0) rectangle (axis cs:487.4,0);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:487.4,0) rectangle (axis cs:500.2,0);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:500.2,0) rectangle (axis cs:513,0);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:513,0) rectangle (axis cs:525.8,0);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:525.8,0) rectangle (axis cs:538.6,1);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:538.6,0) rectangle (axis cs:551.4,0);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:551.4,0) rectangle (axis cs:564.2,0);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:564.2,0) rectangle (axis cs:577,0);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:577,0) rectangle (axis cs:589.8,0);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:589.8,0) rectangle (axis cs:602.6,0);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:602.6,0) rectangle (axis cs:615.4,0);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:615.4,0) rectangle (axis cs:628.2,0);
+\draw[fill=color0,draw opacity=0,very thin] (axis cs:628.2,0) rectangle (axis cs:641,1);
+\end{axis}
+\end{tikzpicture}
+    \caption{The length of the sentences in the job descriptions.}
+    \label{fig:sentence_length}
+\end{figure}

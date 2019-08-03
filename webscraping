@@ -1,3 +1,5 @@
+# For this script to work you will need to download the gecko driver, which can be found on the following site: https://github.com/mozilla/geckodriver/releases
+
 import re
 import json
 from bs4 import BeautifulSoup

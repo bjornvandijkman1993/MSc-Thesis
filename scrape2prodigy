@@ -1,0 +1,55 @@
+import pandas as pd
+from langdetect import detect
+import json
+from difflib import SequenceMatcher
+import re
+import jsonlines
+import os
+
+# Load dataframes Netherlands
+df1 = pd.read_json('data_scientist_rotterdam.json').T
+df2 = pd.read_json('data_scientist_denHaag.json').T
+df3 = pd.read_json('data_scientist_amsterdam.json').T
+df4 = pd.read_json('data_scientist_utrecht.json').T
+df5 = pd.read_json('data_scientist_eindhoven.json').T
+
+# Merge the data
+frames = [df1, df2, df3, df4, df5]
+data_df = pd.concat(frames)
+
+# Convert variables to strings
+data_df["posting"] = data_df["posting"].astype(str)
+data_df["city"] = data_df["city"].astype(str)
+
+data_df["posting"] = data_df.posting.str.replace('\n', ' ')
+data_df["posting"] = data_df.posting.str.replace('\u00eb', 'ë')
+data_df["posting"] = data_df.posting.str.replace('u00', '')
+data_df["posting"] = data_df.posting.str.replace('\u00fc', 'ü')
+data_df["posting"] = data_df.posting.str.replace('\u00ef', 'ï')
+data_df["posting"] = data_df.posting.str.replace('\u00e8', 'è')
+data_df["posting"] = data_df.posting.str.replace('\u00e9', 'é')
+data_df["posting"] = data_df.posting.str.replace('\u20ac', 'euro ')
+data_df["posting"] = data_df.posting.str.replace('\u2019', ' ')
+
+data_df['posting'].dropna(inplace=True) # drop missing values for job posting
+data_df['Language'] = data_df['posting'].apply(detect) # detect language
+
+# Split the city column and only keep the part after the string split
+data_df['city'] = data_df['city'].str.split('-').str[1]
+
+# data_df.city.astype(str).str.split('in ').str[1]
+data_df["city"] = data_df.city.astype(str).str.split('in ').str[1].fillna(data_df.city)
+
+# Remove duplicate job postings and change column name
+data_df = data_df.drop_duplicates('posting')
+
+# Column name has to be text, otherwise Prodigy will not recognize the input. 
+data_df["text"] = data_df["posting"]
+
+# Create two separate datasets based on the language
+df_dutch = data_df[data_df['Language'] == 'nl']
+df_english = data_df[data_df['Language'] == 'en']
+
+# Only keep the text in the job postings
+df_dutch = df_dutch[['text']]
+df_english = df_english[['text']]

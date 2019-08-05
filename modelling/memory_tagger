@@ -1,0 +1,85 @@
+# Import libraries
+import pandas as pd
+import numpy as np
+import pickle
+from seqeval.metrics import classification_report
+from sklearn.model_selection import cross_val_predict
+
+# Load data
+data = pd.read_csv("train_and_test.csv", encoding="latin1")
+
+# Load separate training and test set
+train = pd.read_csv("train_gold_education.csv", encoding="utf-8")
+test = pd.read_csv("evaluation_set.csv", encoding="utf-8")
+
+# Data preparation memory tagger
+words = list(set(data["Word"].values))
+words.append("ENDPAD")
+n_words = len(words); n_words
+tags = list(set(data["Tag"].values))
+n_tags = len(tags); n_tags
+
+class SentenceGetter(object):
+    
+    def __init__(self, data):
+        self.n_sent = 1
+        self.data = data
+        self.empty = False
+    
+    def get_next(self):
+        try:
+            s = self.data[self.data["Sentence #"] == "Sentence: {}".format(self.n_sent)]
+            self.n_sent += 1
+            return s["Word"].values.tolist(), s["POS"].values.tolist(), s["Tag"].values.tolist()    
+        except:
+            self.empty = True
+            return None, None, None
+
+getter_train = SentenceGetter(train)
+sent_train, pos_train, tag_train = getter_train.get_next()
+
+getter_test = SentenceGetter(test)
+sent_test, pos_test, tag_test = getter_test.get_next()
+
+from sklearn.base import BaseEstimator, TransformerMixin
+
+class MemoryTagger(BaseEstimator, TransformerMixin):
+    
+    def fit(self, X, y):
+        '''
+        Expects a list of words as X and a list of tags as y.
+        '''
+        voc = {}
+        self.tags = []
+        for x, t in zip(X, y):
+            if t not in self.tags:
+                self.tags.append(t)
+            if x in voc:
+                if t in voc[x]:
+                    voc[x][t] += 1
+                else:
+                    voc[x][t] = 1
+            else:
+                voc[x] = {t: 1}
+        self.memory = {}
+        for k, d in voc.items():
+            self.memory[k] = max(d, key=d.get)
+    
+    def predict(self, X, y=None):
+        '''
+        Predict the the tag from memory. If word is unknown, predict 'O'.
+        '''
+        return [self.memory.get(x, 'O') for x in X]
+
+tagger = MemoryTagger()
+words_train = train["Word"].values.tolist()
+tags_train = train["Tag"].values.tolist()
+
+words_test = test["Word"].values.tolist()
+tags_test = test["Tag"].values.tolist()
+
+tagger.fit(words_train, tags_train)
+pred = tagger.predict(words_test)
+
+report = classification_report(y_pred=pred, y_true=tags_test)
+print(report)

@@ -1,0 +1,52 @@
+# Import libraries
+import pandas as pd
+import numpy as np
+import pickle
+import random
+
+# Import data
+data = pd.read_csv("train_and_test.csv", encoding="latin1")
+
+# List of words
+words = list(set(data["Word"].values))
+words.append("ENDPAD")
+n_words = len(words); n_words
+tags = list(set(data["Tag"].values))
+n_tags = len(tags); n_tags
+
+# Form sentences 
+class SentenceGetter(object):
+    
+    def __init__(self, data):
+        self.n_sent = 1
+        self.data = data
+        self.empty = False
+        agg_func = lambda s: [(w, p, t) for w, p, t in zip(s["Word"].values.tolist(),
+                                                           s["POS"].values.tolist(),
+                                                           s["Tag"].values.tolist())]
+        self.grouped = self.data.groupby("Sentence #").apply(agg_func)
+        self.sentences = [s for s in self.grouped]
+    
+    def get_next(self):
+        try:
+            s = self.grouped["Sentence: {}".format(self.n_sent)]
+            self.n_sent += 1
+            return s
+        except:
+            return None
+    
+getter = SentenceGetter(data)
+sent = getter.get_next()
+sentences = getter.sentences
+
+# Shuffle sentences such that we do not only use sentences from specific city in the test set
+random.shuffle(sentences)
+training_sentences = sentences[0:1737]
+test_sentences = sentences[1737:2171]
+
+# Export sentences
+with open('training_sentences', 'wb') as fp:
+    pickle.dump(training_sentences, fp)
+    
+with open('test_sentences', 'wb') as fp:
+    pickle.dump(test_sentences, fp)

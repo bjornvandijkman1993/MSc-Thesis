@@ -9,7 +9,7 @@ from sklearn.model_selection import cross_val_predict
 data = pd.read_csv("train_and_test.csv", encoding="latin1")
 
 # Load separate training and test set
-train = pd.read_csv("train_gold_education.csv", encoding="utf-8")
+train = pd.read_csv("training_set.csv", encoding="utf-8")
 test = pd.read_csv("evaluation_set.csv", encoding="utf-8")
 
 # Data preparation memory tagger

@@ -1,0 +1,126 @@
+# Import libraries
+import pandas as pd
+import numpy as np
+from sklearn_crfsuite import CRF
+from sklearn.model_selection import cross_val_predict
+from seqeval.metrics import classification_report
+import pickle
+
+# Load data
+data = pd.read_csv("train_and_test.csv", encoding="latin1")
+
+# Load sentences training set
+with open ('training_sentences', 'rb') as fp:
+    sentences = pickle.load(fp)
+
+# List of words and tags
+words = list(set(data["Word"].values))
+words.append("ENDPAD")
+n_words = len(words); n_words
+tags = list(set(data["Tag"].values))
+n_tags = len(tags); n_tags
+
+# List all unique POS
+pos = list(set(data["POS"].values))
+n_pos = len(pos)
+
+# Create features
+def word2features(sent, i):
+    word = sent[i][0]
+    postag = sent[i][1]
+
+    features = {
+        'bias': 1.0,
+        'word.lower()': word.lower(),
+        'word[-3:]': word[-3:],
+        'word[-2:]': word[-2:],
+        'word.isupper()': word.isupper(),
+        'word.isalpha()': word.isalpha(),
+        'word.isalnum()': word.isalnum(),
+        'word.endswith()': word.endswith('sh'),
+        'word.istitle()': word.istitle(),
+        'word.isdigit()': word.isdigit(),
+        'postag': postag,
+        'postag[:2]': postag[:2],
+    }
+    if i > 0:
+        word1 = sent[i-1][0]
+        postag1 = sent[i-1][1]
+        features.update({
+            '-1:word.lower()': word1.lower(),
+            '-1:word.istitle()': word1.istitle(),
+            '-1:word.isupper()': word1.isupper(),
+            '-1:word.isdigit()': word1.isdigit(),
+            '-1:word.isalnum()': word1.isalnum(),
+            '-1:postag': postag1,
+            '-1:postag[:2]': postag1[:2],
+        })
+    else:
+        features['BOS'] = True
+
+    if i < len(sent)-1:
+        word1 = sent[i+1][0]
+        postag1 = sent[i+1][1]
+        features.update({
+            '+1:word.lower()': word1.lower(),
+            '+1:word.istitle()': word1.istitle(),
+            '+1:word.isupper()': word1.isupper(),
+            '+1:postag': postag1,
+            '+1:postag[:2]': postag1[:2],
+        })
+    else:
+        features['EOS'] = True
+
+    return features
+
+
+def sent2features(sent):
+    return [word2features(sent, i) for i in range(len(sent))]
+
+def sent2labels(sent):
+    return [label for token, postag, label in sent]
+
+def sent2tokens(sent):
+    return [token for token, postag, label in sent]
+
+# Specify X and y variables
+X = [sent2features(s) for s in sentences]
+y = [sent2labels(s) for s in sentences]
+
+# CRF parameters
+crf = CRF(algorithm='lbfgs',
+          c1=0.5,
+          c2=0.5,
+          max_iterations=100,
+          all_possible_transitions=False)
+
+# Cross validation training set for parameter tuning, choose parameters based on these results
+pred = cross_val_predict(estimator=crf, X=X, y=y, cv=5)
+
+# Classification report of cross validation results
+print(classification_report(y_true = y, y_pred = pred, digits = 2))
+
+# Load test sentences
+with open ('test_sentences', 'rb') as fp:
+    sentences_val = pickle.load(fp)    
+
+# Create training and test set from sentences
+X_train = [sent2features(s) for s in sentences]
+y_train = [sent2labels(s) for s in sentences]
+
+X_test = [sent2features(s) for s in sentences_val]
+y_test = [sent2labels(s) for s in sentences_val]
+
+# Specify best parameters found in cross validation
+crf = CRF(algorithm='lbfgs',
+          c1=0.1,
+          c2=0.1,
+          max_iterations=200,
+          all_possible_transitions=True)
+
+# Make predictions
+crf.fit(X_train, y_train)
+y_pred = crf.predict(X_test)
+
+# Classification report of predictions
+print(classification_report(y_test, y_pred, digits = 3))

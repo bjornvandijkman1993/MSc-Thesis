@@ -1,0 +1,173 @@
+# Load packages
+from keras.models import Model, Input
+from keras.utils import to_categorical
+from keras.callbacks import EarlyStopping
+from keras.preprocessing.sequence import pad_sequences
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MultiLabelBinarizer
+from keras.layers.merge import add
+from keras.layers import LSTM, Embedding, Dense, TimeDistributed, Dropout, Bidirectional, Lambda
+
+import tensorflow as tf
+import tensorflow_hub as hub
+from keras import backend as K
+
+!pip install seqeval
+from seqeval.metrics import precision_score, recall_score, f1_score, classification_report
+from nltk.tokenize import WordPunctTokenizer
+
+import string
+import pandas as pd
+import random
+import json
+import numpy as np
+import pickle
+
+!pip install tensorflow-gpu
+!pip3 install git+https://github.com/keras-team/keras.git -U
+
+# Load data
+data = pd.read_csv("train_and_test.csv", encoding="latin1")
+
+# Load sentences training and validation set
+with open ('training_sentences', 'rb') as fp:
+    sentences = pickle.load(fp)
+
+with open ('test_sentences', 'rb') as fp:
+    sentences_val = pickle.load(fp)   
+    
+words = list(set(data["Word"].values))
+words.append("ENDPAD")
+n_words = len(words); n_words
+tags = list(set(data["Tag"].values))
+n_tags = len(tags); n_tags
+
+# List all unique POS
+pos = list(set(data["POS"].values))
+n_pos = len(pos)
+
+# First, create dictionaries of words and targets
+max_len = 200
+word2idx = {w: i for i, w in enumerate(words)} # Index all words
+tag2idx = {t: i for i, t in enumerate(tags)}    # Index all tags
+# Create a dictionary to find the word for a certain index
+idx2tag = {i: t for t, i in tag2idx.items()}
+idx2word = {i: w for w, i in word2idx.items()}
+
+# Map the sentences to a sequence of numbers and then pad the sequence with the endword
+# The index of the endword is n_words - 1 since python start indexing at 0
+# w[0] is the actual word, w[2] is the tag.
+X = [[w[0] for w in s] for s in sentences]
+
+new_X = []
+for seq in X:
+    new_seq = []
+    for i in range(max_len):
+        try:
+            new_seq.append(seq[i])
+        except:
+            new_seq.append("__PAD__")
+    new_X.append(new_seq)
+X = new_X
+
+y = [[tag2idx[w[2]] for w in s] for s in sentences]
+y = pad_sequences(maxlen = max_len, sequences = y, padding = "post", value = tag2idx["O"])
+
+# Define early_stopping_monitor
+early_stopping_monitor = EarlyStopping(patience = 2)
+
+batch_size = 32
+sess = tf.Session()
+K.set_session(sess)
+elmo_model = hub.Module("https://tfhub.dev/google/elmo/2", trainable=True)
+sess.run(tf.global_variables_initializer())
+sess.run(tf.tables_initializer())
+
+# Elmo embeddings
+def ElmoEmbedding(x):
+    return elmo_model(inputs={
+                            "tokens": tf.squeeze(tf.cast(x, tf.string)),
+                            "sequence_len": tf.constant(batch_size*[max_len])
+                      },
+                      signature="tokens",
+                      as_dict=True)["elmo"]
+
+
+# Custom categorical accuracy 
+def custom_sparse_categorical_accuracy(y_true, y_pred):
+    return K.cast(K.equal(K.max(y_true, axis=-1),
+                          K.cast(K.argmax(y_pred, axis=-1), K.floatx())),
+                  K.floatx())
+
+# Model specifications
+input_text = Input(shape=(max_len,), dtype=tf.string)
+embedding = Lambda(ElmoEmbedding, output_shape=(max_len, 1024))(input_text)
+x = Bidirectional(LSTM(units=100, return_sequences=True,
+                       recurrent_dropout=0.1, dropout=0.2))(embedding)
+x_rnn = Bidirectional(LSTM(units=100, return_sequences=True,
+                           recurrent_dropout=0.1, dropout=0.1))(x)
+x = add([x, x_rnn])  # residual connection to the first biLSTM
+out = TimeDistributed(Dense(n_tags, activation="softmax"))(x)
+model = Model(input_text, out)
+model.compile(optimizer="rmsprop", loss="sparse_categorical_crossentropy", metrics=[custom_sparse_categorical_accuracy])
+
+# This code you will need to alter depending on the size of your dataset. 
+X_tr, X_val = X[:45*batch_size], X[-8*batch_size:]
+y_tr, y_val = y[:45*batch_size], y[-8*batch_size:]
+y_tr = y_tr.reshape(y_tr.shape[0], y_tr.shape[1], 1)
+y_val = y_val.reshape(y_val.shape[0], y_val.shape[1], 1)
+
+# Fit the model
+history = model.fit(np.array(X_tr), y_tr, validation_data=(np.array(X_val), y_val),
+                    batch_size=batch_size, epochs=30, verbose=1, callbacks = [early_stopping_monitor])
+
+# Data preparation test set
+X = [[w[0] for w in s] for s in sentences_val]
+
+new_X = []
+for seq in X:
+    new_seq = []
+    for i in range(max_len):
+        try:
+            new_seq.append(seq[i])
+        except:
+            new_seq.append("__PAD__")
+    new_X.append(new_seq)
+X_te = new_X
+
+y = [[tag2idx[w[2]] for w in s] for s in sentences_val]
+y_te = pad_sequences(maxlen = max_len, sequences = y, padding = "post", value = tag2idx["O"])
+
+# Predict on test set using model of training set
+X_te = X_te[:13*batch_size]
+test_pred = model.predict(np.array(X_te), verbose=1)
+
+# turn indices to tags to make a classification report
+idx2tag = {i: w for w, i in tag2idx.items()}
+
+def pred2label(pred):
+    out = []
+    for pred_i in pred:
+        out_i = []
+        for p in pred_i:
+            p_i = np.argmax(p)
+            out_i.append(idx2tag[p_i].replace("PAD", "O"))
+        out.append(out_i)
+    return out
+  
+# predicted labels
+pred_labels = pred2label(test_pred)
+
+def test2label(pred):
+    out = []
+    for pred_i in pred:
+        out_i = []
+        for p in pred_i:
+            out_i.append(idx2tag[p].replace("PADword", "O"))
+        out.append(out_i)
+    return out
+
+test_labels = test2label(y_te[:13*batch_size])
+
+# Classification report
+print(classification_report(test_labels, pred_labels))

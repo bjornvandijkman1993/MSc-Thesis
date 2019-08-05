@@ -1,0 +1,105 @@
+import pandas as pd
+import numpy as np
+
+# Load keras packages
+from keras.layers import Dense, LSTM, Embedding, TimeDistributed, Dropout, Bidirectional
+from keras.models import Model, Input
+from keras.utils import to_categorical
+from keras.callbacks import EarlyStopping
+from keras.preprocessing.sequence import pad_sequences
+from sklearn.preprocessing import MultiLabelBinarizer
+from sklearn.model_selection import cross_val_predict
+import pickle
+
+# Load data
+data = pd.read_csv("train_and_test.csv", encoding="latin1")
+
+# Load sentences training set
+with open ('training_sentences', 'rb') as fp:
+    sentences = pickle.load(fp)
+
+with open ('test_sentences', 'rb') as fp:
+    sentences_val = pickle.load(fp)    
+
+# List of words and tags
+words = list(set(data["Word"].values))
+words.append("ENDPAD")
+n_words = len(words); n_words
+tags = list(set(data["Tag"].values))
+n_tags = len(tags); n_tags
+
+# List all unique POS
+pos = list(set(data["POS"].values))
+n_pos = len(pos)
+
+# First, create dictionaries of words and targets
+max_len = 200
+word2idx = {w: i for i, w in enumerate(words)} # Index all words
+tag2idx = {t: i for i, t in enumerate(tags)}    # Index all tags
+# Create a dictionary to find the word for a certain index
+idx2tag = {i: t for t, i in tag2idx.items()}
+idx2word = {i: w for w, i in word2idx.items()}
+
+# Map the sentences to a sequence of numbers and then pad the sequence with the endword
+# The index of the endword is n_words - 1 since python start indexing at 0
+# w[0] is the actual word, w[2] is the tag.
+X = [[word2idx[w[0]] for w in s] for s in sentences]
+X = pad_sequences(maxlen = max_len, sequences = X, padding = "post", value = word2idx['ENDPAD'])
+
+# Same for tag sequence
+# The value of the endword-tag is O
+y = [[tag2idx[w[2]] for w in s] for s in sentences]
+y = pad_sequences(maxlen = max_len, sequences = y, padding = "post", value = tag2idx["O"])
+
+# Change the labels of y to categorical
+y = [to_categorical(i, num_classes = n_tags) for i in y]
+
+# Define early_stopping_monitor
+early_stopping_monitor = EarlyStopping(patience = 2)
+
+# Train the model, early stopping monitor is used 
+input = Input(shape=(max_len,))
+model = Embedding(input_dim=n_words, output_dim=50, input_length=max_len)(input)
+model = Dropout(0.1)(model)
+model = Bidirectional(LSTM(units=100, return_sequences=True, recurrent_dropout=0.1))(model)
+out = TimeDistributed(Dense(n_tags, activation="softmax"))(model)  # softmax output layer
+model = Model(input, out)
+model.compile(optimizer="rmsprop", loss="categorical_crossentropy", metrics=["accuracy"])
+model.fit(X, np.array(y), 
+                    batch_size=32, epochs=30, 
+                    validation_split=0.2, verbose=1,
+                    callbacks = [early_stopping_monitor])
+
+# Data preparation test set
+X_val = pad_sequences(sequences = [[word2idx.get(w[0], (word2idx['ENDPAD']+1)) for w in s] for s in sentences_val],
+                            padding = "post", 
+                            value = word2idx['ENDPAD'], 
+                            maxlen = max_len)
+
+
+Y_val = [[tag2idx[w[2]] for w in s] for s in sentences_val]
+Y_val = pad_sequences(maxlen = max_len, sequences = Y_val, padding = "post", value = tag2idx["O"])
+
+# Change the labels of y to categorical
+Y_val = [to_categorical(i, num_classes = n_tags) for i in Y_val] 
+
+# Create the prediction
+y_pred = model.predict(X_val, verbose = 1)
+
+# Define a function to obtain label from prediction
+def pred2label(pred):
+    out = []
+    for pred_i in pred:
+        out_i = []
+        for p in pred_i:
+            p_i = np.argmax(p)
+            out_i.append(idx2tag[p_i])
+        out.append(out_i)
+    return out
+ 
+# Apply function defined above to prediction and test data    
+pred_labels = pred2label(y_pred)
+test_labels = pred2label(Y_val)
+
+# Print classification report
+print(classification_report(test_labels, pred_labels))

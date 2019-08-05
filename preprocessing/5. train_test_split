@@ -41,7 +41,7 @@ sentences = getter.sentences
 
 # Shuffle sentences such that we do not only use sentences from specific city in the test set
 random.shuffle(sentences)
-training_sentences = sentences[0:1737]
+training_sentences = sentences[0:1737] # Take subsets of these training sentences to test the effect of training size on performance
 test_sentences = sentences[1737:2171]
 
 # Export sentences

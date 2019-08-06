@@ -9,6 +9,15 @@ from keras.callbacks import EarlyStopping
 from keras.preprocessing.sequence import pad_sequences
 from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.model_selection import cross_val_predict
+
+# CRF packages
+from sklearn_crfsuite import CRF
+from keras_contrib.layers import CRF
+
+# Classification report
+from seqeval.metrics import classification_report
+
+# Import sentence data
 import pickle
 
 # Load data
@@ -62,8 +71,7 @@ input = Input(shape=(max_len,))
 model = Embedding(input_dim=n_words, output_dim=50, input_length=max_len)(input)
 model = Dropout(0.1)(model)
 model = Bidirectional(LSTM(units=100, return_sequences=True, recurrent_dropout=0.1))(model) 
-
-# leave out Bidirectional for normal LSTM 
+# leave out Bidirectional LSTM 
 
 out = TimeDistributed(Dense(n_tags, activation="softmax"))(model)  # softmax output layer
 
@@ -74,6 +82,11 @@ out = TimeDistributed(Dense(n_tags, activation="softmax"))(model)  # softmax out
 
 model = Model(input, out)
 model.compile(optimizer="rmsprop", loss="categorical_crossentropy", metrics=["accuracy"])
+
+# CRF compiler, crf.loss_function is in this user case equivalent to categorical_crossentropy see: https://github.com/keras-team/keras-contrib/blob/master/keras_contrib/losses/crf_losses.py
+
+# model.compile(optimizer="rmsprop", loss=crf.loss_function, metrics=[crf.accuracy])
+
 model.fit(X, np.array(y), 
                     batch_size=32, epochs=30, 
                     validation_split=0.2, verbose=1,

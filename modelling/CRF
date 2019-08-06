@@ -87,7 +87,7 @@ def sent2tokens(sent):
 X = [sent2features(s) for s in sentences]
 y = [sent2labels(s) for s in sentences]
 
-# CRF parameters
+# CRF parameters, lbfgs algorithm uses both L1 (c1) and L2 (c2) regularization
 crf = CRF(algorithm='lbfgs',
           c1=0.5,
           c2=0.5,
